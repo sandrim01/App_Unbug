@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block title %}Chamado #{{ ticket.id }} - Unbug Solutions TI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4 align-items-center">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{{ url_for('tickets.index') }}">Chamados</a></li>
+                    <li class="breadcrumb-item active">Chamado #{{ ticket.id }}</li>
+                </ol>
+            </nav>
+            <h2 class="h3 mb-0 text-gray-800">{{ ticket.title }}</h2>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a href="{{ url_for('tickets.edit_ticket', id=ticket.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </a>
+                {% if not ticket.service_order_id %}
+                <form action="{{ url_for('tickets.convert_to_os', id=ticket.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-file-invoice me-2"></i>Gerar OS
+                    </button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('orders.view_order', id=ticket.service_order_id) }}" class="btn btn-outline-info">
+                    <i class="fas fa-external-link-alt me-2"></i>Ver OS #{{ ticket.service_order_id }}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Detalhes do Chamado -->
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Descrição do Chamado</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <p class="lead">{{ ticket.description|nl2br }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informações Laterais -->
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Informações</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase text-muted mb-1 d-block">Cliente</label>
+                        <div class="h6 mb-0">{{ ticket.client.name }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase text-muted mb-1 d-block">Status</label>
+                        <span
+                            class="badge {% if ticket.status == 'open' %}bg-success{% elif ticket.status == 'in_progress' %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {{ ticket.status|capitalize }}
+                        </span>
+                    </div>
+                    <div class="mb-3">
+                        <label
+                            class="text-xs font-weight-bold text-uppercase text-muted mb-1 d-block">Prioridade</label>
+                        <span
+                            class="badge {% if ticket.priority == 'urgent' %}bg-danger{% elif ticket.priority == 'high' %}bg-warning text-dark{% else %}bg-info{% endif %}">
+                            {{ ticket.priority|capitalize }}
+                        </span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase text-muted mb-1 d-block">Atribuído
+                            a</label>
+                        <div class="h6 mb-0">{{ ticket.assigned_to.full_name if ticket.assigned_to else 'Não atribuído'
+                            }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-xs font-weight-bold text-uppercase text-muted mb-1 d-block">Aberto em</label>
+                        <div class="h6 mb-0">{{ ticket.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="text-xs font-weight-bold text-uppercase text-muted mb-1 d-block">Última
+                            atualização</label>
+                        <div class="h6 mb-0">{{ ticket.updated_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                    </div>
+                </div>
+                {% if current_user.can_delete() %}
+                <div class="card-footer bg-light border-top-0">
+                    <button type="button" class="btn btn-link text-danger p-0" data-bs-toggle="modal"
+                        data-bs-target="#deleteModal">
+                        Excluir Chamado
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Tem certeza que deseja excluir o chamado <strong>#{{ ticket.id }}</strong>? Esta ação não pode ser
+                desfeita.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{{ url_for('tickets.delete_ticket', id=ticket.id) }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger">Excluir Permanentemente</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
